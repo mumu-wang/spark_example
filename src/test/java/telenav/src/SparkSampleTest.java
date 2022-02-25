@@ -1,14 +1,25 @@
 package telenav.src;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class SparkSampleTest {
+    static SparkSample sparkSample;
+
+    @BeforeClass
+    public static void before(){
+        sparkSample = new SparkSample();
+    }
+
     @Test
-    public void sparkTest(){
-        SparkSample sparkSample = new SparkSample();
+    public void simpleTest(){
         sparkSample.sample();
     }
+
+    @Test
+    public void readParquetSampleTest(){
+        sparkSample.readParquetSample();
+    }
+
 
 }

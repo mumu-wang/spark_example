@@ -1,6 +1,7 @@
 package telenav.src;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 
@@ -15,13 +16,15 @@ import static org.apache.spark.sql.functions.*;
  * @create: 2022-01-04 14:29
  **/
 public class SparkSample {
+    public static final File f = new File("src/main/resources/tables");
+    public static final String waysPath = "file:///" + f.getAbsolutePath() + "/*WAYS*";
+    public static final String nodesPath = "file:///" + f.getAbsolutePath() + "/*NODES*";
+    public static final String relationsPath = "file:///" + f.getAbsolutePath() + "/*RELATIONS*";
+    public static final String relationMembersPath = "file:///" + f.getAbsolutePath() + "/*RELATION_MEMBERS*";
+    public static final String relationMembersParquetPath = "file:///" + f.getAbsolutePath() + "/*RM*.parquet";
 
     public void sample() {
-        File f = new File("src/main/resources/tables");
-        String waysPath = "file:///" + f.getAbsolutePath() + "/*WAYS*";
-        String nodesPath = "file:///" + f.getAbsolutePath() + "/*NODES*";
-        String relationsPath = "file:///" + f.getAbsolutePath() + "/*RELATIONS*";
-        String relationMembersPath = "file:///" + f.getAbsolutePath() + "/*RELATION_MEMBERS*";
+
         // startup spark
         SparkSession sparkSession = SparkSession.builder().master("local[*]").appName("handle data").getOrCreate();
         sparkSession.conf().set("spark.sql.crossJoin.enabled", "true");
@@ -52,6 +55,23 @@ public class SparkSample {
 
         // close spark
         sparkSession.close();
+    }
+
+    public void readParquetSample() {
+        // startup spark
+        SparkSession sparkSession = SparkSession.builder().master("local[*]").appName("handle data").getOrCreate();
+        sparkSession.conf().set("spark.sql.crossJoin.enabled", "true");
+        sparkSession.sparkContext().setLogLevel("WARN");
+        Dataset<Row> relationMembersData = sparkSession.read().load(relationMembersParquetPath);
+        relationMembersData.show();
+
+        relationMembersData
+                .map(line -> {
+                    String[] slot = line.mkString(",").split(",");
+                    return new RelationMember(slot[0], slot[1], slot[2], slot[3], Integer.parseInt(slot[4]));
+                }, Encoders.bean(RelationMember.class))
+                .filter(line-> line.getSeq() == 0)
+                .show(false);
 
     }
 }
